@@ -1,0 +1,35 @@
+ 
+standard
+pi with 100000000 steps is 3.141593 in 0.477754 seconds
+
+critical +
+pi with 100000000 steps is 3.141593 in 0.493594 seconds
+
+atomic +
+pi with 100000000 steps is 3.141593 in 0.489448 seconds
+
+
+NEW
+
+
+STANDARD
+ pi with 100000000 steps is 3.141593 in 0.469387 seconds
+ Average: 0.470635
+100x
+ Average: 0.327745
+
+CRITICAL +
+pi with 100000000 steps is 3.141593 in 0.469229 seconds
+ Average: 0.472289
+ 100x
+ Average: 0.327587
+
+
+ ATOMIC +
+ pi with 100000000 steps is 3.141593 in 0.472779 seconds
+ Average: 0.472482
+100x
+ Average: 0.328041
+
+ REDUCTION +
+ Average: 0.328169
