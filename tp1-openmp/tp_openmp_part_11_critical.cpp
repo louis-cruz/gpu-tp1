@@ -24,12 +24,13 @@ History: Written by Tim Mattson, 11/1999.
 using namespace std;
 
 static long num_steps = 10000000;
+static int nb_core = 1;
 double step;
 string variation = "";
 
 double sumSplitArray(){
       variation = "reduction";
-      double sums[num_steps] = {0};
+    //  double sums[num_steps] = {0};
       int cores = 8;
 
         double x, sum = 0.0;
@@ -64,15 +65,11 @@ double sumReduction(){
 double sumCritical(){
   variation = "critical";
   double x, sum = 0.0;
-  # pragma omp parallel for private(x) shared (sum)
-
+  # pragma omp parallel for private(x) shared(sum)
           for (int i=1;i<= num_steps; i++){
-
                 x = (i-0.5)*step;
             # pragma omp critical
                 sum = sum + 4.0/(1.0+x*x);
-
-
           }
 
       return sum;
@@ -81,7 +78,7 @@ double sumCritical(){
 double sumAtomic(){
   variation = "atomic";
       double x, sum = 0.0;
-    #pragma omp parallel for private (x) shared (sum)
+    #pragma omp parallel for private(x) shared(sum)
     for (int i=1;i<= num_steps; i++){
 		  x = (i-0.5)*step;
           # pragma omp atomic
@@ -102,6 +99,7 @@ int sumStandard(){
 }
 
 double calculatePi(){
+
   //return step * sumStandard();
   //return step * sumAtomic();
   return step * sumCritical();
@@ -117,6 +115,9 @@ int main (int argc, char** argv)
         if ( ( strcmp( argv[ i ], "-N" ) == 0 ) || ( strcmp( argv[ i ], "-num_steps" ) == 0 ) ) {
             num_steps = atol( argv[ ++i ] );
             printf( "  User num_steps is %ld\n", num_steps );
+        } else if ( ( strcmp( argv[ i ], "-C" ) == 0 ) || ( strcmp( argv[ i ], "-nb_core" ) == 0 ) ) {
+            nb_core = atol( argv[ ++i ] );
+            printf( "  User nb_core is %ld\n", nb_core );
         } else if ( ( strcmp( argv[ i ], "-h" ) == 0 ) || ( strcmp( argv[ i ], "-help" ) == 0 ) ) {
             printf( "  Pi Options:\n" );
             printf( "  -num_steps (-N) <int>:      Number of steps to compute Pi (by default 100000000)\n" );
@@ -136,7 +137,7 @@ int main (int argc, char** argv)
       double totalTime = 0;
 
       std::ofstream myfile;
-      myfile.open ("result_log.csv",ios_base::app);
+      myfile.open ("stats_pi.csv",ios_base::app);
 
 
       for(int i=0;i<rounds;i++){
@@ -150,7 +151,7 @@ int main (int argc, char** argv)
         totalTime += time;
 
         //writeToCSV(("%i, %lf, %s",i,time, variation));
-        myfile << (variation + ", "+ to_string(0) + " ," + to_string(num_steps) + " ," + to_string(time) + "\n");
+        myfile << (variation + ", "+ to_string(nb_core) + " ," + to_string(num_steps) + " ," + to_string(time) + "\n");
 
       }
   myfile.close();

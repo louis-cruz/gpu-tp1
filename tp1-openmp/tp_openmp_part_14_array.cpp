@@ -24,13 +24,15 @@ History: Written by Tim Mattson, 11/1999.
 using namespace std;
 
 static long num_steps = 10000000;
-static int nb_core = 1;
 double step;
 string variation = "";
+static int nb_core = 1;
+
+
 
 double sumSplitArray(){
-      variation = "array";
-  //    double sums[num_steps] = {0};
+      variation = "reduction";
+    //  double sums[num_steps] = {0};
       int cores = 8;
 
         double x, sum = 0.0;
@@ -52,7 +54,7 @@ double sumSplitArray(){
 }
 
 double sumReduction(){
-      variation = "reduce";
+      variation = "reduction";
       double x, sum = 0.0;
       # pragma omp parallel for private(x) reduction (+:sum)
       for (int i=1;i<= num_steps; i++){
@@ -92,7 +94,7 @@ double sumAtomic(){
 
 }
 
-double sumStandard(){
+int sumStandard(){
   variation = "standard";
       double x, sum = 0.0;
           for (int i=1;i<= num_steps; i++){
@@ -102,12 +104,36 @@ double sumStandard(){
       return sum;
 }
 
+double sumArray() {
+    variation = "array";
+    int i;
+	  double x, sum, sumpart = 0.0;
+
+    step = 1.0/(double) num_steps;
+    printf("%d", omp_get_num_threads());
+
+    
+    # pragma omp parallel for reduction(+:sumpart) reduction(+:sum) private(x)
+    for (int j=1;j<= omp_get_num_threads(); j++) {
+        for (int i = num_steps*(j-1)/omp_get_num_threads();i<= num_steps*j/omp_get_num_threads(); i++)
+        {	      
+            x = (i-0.5)*step;
+            # pragma omp atomic
+            sumpart = sumpart + 4.0/(1.0+x*x);		
+        }
+        
+      sum += sumpart;
+    }
+
+    return sum;
+}
+
 double calculatePi(){
-  return step*sumStandard();
+  //return step * sumStandard();
   //return step * sumAtomic();
   //return step * sumCritical();
-  //return step * sumReduction();
-  //return step * sumSplitArray();
+  // return step * sumReduction();
+  return step * sumArray();
 }
 
 int main (int argc, char** argv)
@@ -120,7 +146,7 @@ int main (int argc, char** argv)
             printf( "  User num_steps is %ld\n", num_steps );
         } else if ( ( strcmp( argv[ i ], "-C" ) == 0 ) || ( strcmp( argv[ i ], "-nb_core" ) == 0 ) ) {
             nb_core = atol( argv[ ++i ] );
-            printf( "  User nb_core is %d\n", nb_core );
+            printf( "  User nb_core is %ld\n", nb_core );
         } else if ( ( strcmp( argv[ i ], "-h" ) == 0 ) || ( strcmp( argv[ i ], "-help" ) == 0 ) ) {
             printf( "  Pi Options:\n" );
             printf( "  -num_steps (-N) <int>:      Number of steps to compute Pi (by default 100000000)\n" );
@@ -130,6 +156,7 @@ int main (int argc, char** argv)
       }
 
       int rounds = 10;
+
 
       step = 1.0/(double) num_steps;
 

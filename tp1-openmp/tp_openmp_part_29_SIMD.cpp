@@ -149,9 +149,11 @@ int main( int argc, char* argv[] )
         // Sum the results of the previous step into a single variable (result)
 
         for (int i = 0 ; i < N ; i++){
+          # pragma omp simd parallel for reduction (+:tmp)
           for (int j = 0; j < N ; j++){
             tmp += A[i*M+j]*x[j];
           } 
+          # pragma omp simd parallel for reduction (+:result)
           for (int j = 0; j < N ; j++){
               result += tmp * y[j]; 
           } 
@@ -185,18 +187,18 @@ int main( int argc, char* argv[] )
   // double Gbytes = 1.0e-9 * double( sizeof(double) * ( 2 * M * N + N ) );
   double Gbytes = 1.0e-9 * double( sizeof(double) * ( M + M * N + N ) );
 
-  myfile << ("sequential ,"+ to_string(N) + " ," + to_string(M) + " ," + to_string(nrepeat) + " ," + to_string(time) + " ," + to_string(Gbytes*1000) + " ," + to_string(Gbytes * nrepeat / time ) + "\n");
-
   // Print results (problem size, time and bandwidth in GB/s).
   printf( "  N( %d ) M( %d ) nrepeat ( %d ) problem( %g MB ) time( %g s ) bandwidth( %g GB/s )\n",
           N, M, nrepeat, Gbytes * 1000, time, Gbytes * nrepeat / time );
 
+  myfile << ("sequential ,"+ to_string(N) + " ," + to_string(M) + " ," + to_string(nrepeat) + " ," + to_string(time) + " ," + to_string(Gbytes*1000) + " ," + to_string(Gbytes * nrepeat / time ) + "\n");
+
   //std::free(A);
   //std::free(y);
   //std::free(x);
-
-  myfile.close();
   
+  myfile.close();
+
   delete(x);
   delete(y);
   delete(A);

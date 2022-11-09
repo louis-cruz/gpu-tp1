@@ -29,8 +29,8 @@ double step;
 string variation = "";
 
 double sumSplitArray(){
-      variation = "array";
-  //    double sums[num_steps] = {0};
+      variation = "reduction";
+    //  double sums[num_steps] = {0};
       int cores = 8;
 
         double x, sum = 0.0;
@@ -92,7 +92,7 @@ double sumAtomic(){
 
 }
 
-double sumStandard(){
+int sumStandard(){
   variation = "standard";
       double x, sum = 0.0;
           for (int i=1;i<= num_steps; i++){
@@ -103,10 +103,10 @@ double sumStandard(){
 }
 
 double calculatePi(){
-  return step*sumStandard();
+  //return step * sumStandard();
   //return step * sumAtomic();
   //return step * sumCritical();
-  //return step * sumReduction();
+  return step * sumReduction();
   //return step * sumSplitArray();
 }
 
@@ -120,7 +120,7 @@ int main (int argc, char** argv)
             printf( "  User num_steps is %ld\n", num_steps );
         } else if ( ( strcmp( argv[ i ], "-C" ) == 0 ) || ( strcmp( argv[ i ], "-nb_core" ) == 0 ) ) {
             nb_core = atol( argv[ ++i ] );
-            printf( "  User nb_core is %d\n", nb_core );
+            printf( "  User num_steps is %ld\n", nb_core );
         } else if ( ( strcmp( argv[ i ], "-h" ) == 0 ) || ( strcmp( argv[ i ], "-help" ) == 0 ) ) {
             printf( "  Pi Options:\n" );
             printf( "  -num_steps (-N) <int>:      Number of steps to compute Pi (by default 100000000)\n" );
@@ -130,6 +130,7 @@ int main (int argc, char** argv)
       }
 
       int rounds = 10;
+
 
       step = 1.0/(double) num_steps;
 
