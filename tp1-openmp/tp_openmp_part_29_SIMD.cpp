@@ -62,7 +62,8 @@ int main( int argc, char* argv[] )
   int N = -1;         // number of rows 2^12
   int M = -1;         // number of columns 2^10
   int S = -1;         // total size 2^22
-  int nrepeat = 10;  // number of repeats of the test
+  int nrepeat = 100;  // number of repeats of the test
+  int nb_core = 1;
 
   // Read command line arguments.
   for ( int i = 0; i < argc; i++ ) {
@@ -81,6 +82,10 @@ int main( int argc, char* argv[] )
     else if ( strcmp( argv[ i ], "-nrepeat" ) == 0 ) {
       nrepeat = atoi( argv[ ++i ] );
     }
+    else if ( ( strcmp( argv[ i ], "-C" ) == 0 ) || ( strcmp( argv[ i ], "-nb_core" ) == 0 ) ) {
+      nb_core = atol( argv[ ++i ] );
+      printf( "  User nb_core is %ld\n", nb_core );
+    }
     else if ( ( strcmp( argv[ i ], "-h" ) == 0 ) || ( strcmp( argv[ i ], "-help" ) == 0 ) ) {
       printf( "  y^T*A*x Options:\n" );
       printf( "  -Rows (-N) <int>:      exponent num, determines number of rows 2^num (default: 2^12 = 4096)\n" );
@@ -91,47 +96,43 @@ int main( int argc, char* argv[] )
       exit( 1 );
     }
   }
+  omp_set_num_threads(nb_core);
+
+  S = N*M;
 
   // Check sizes.
-  //checkSizes( N, M, S, nrepeat );
+  checkSizes( N, M, S, nrepeat );
 
   // Allocate x,y,A
-  printf("d");
-  int *y = new int[M];
-  int *x = new int[N];
-  int *A = new int[N*M];
- //int A[N][M];  
-  //auto y = new array<int>
-  //auto x = (vector<int> *) malloc(sizeof(vector<int>));
-  //auto A = (vector<vector<int>> *)malloc(sizeof(vector<vector<int>>));
-  int tmp = 0;
-  int result = 0;
-  // Initialize y vector to 1.
  
-  //array<int, M> y = {1} ; 
-  //vector<int> y(M, 1);
+  double *y = new double[N] ;
+  double *x =  new double[M];
+  double *A =  new double[S];
 
-  //array<int, N> x = {1} ; 
+   
+  // Initialize y vector to 1.
 
-  printf("ici");
-  
   for (int i = 0 ; i< N ; i++)
- {
-  x[i] = 1;
-  for (int j = 0; j<M; j++){
-    if (i = 1){
-      y[j] = 1; 
-    } 
-    A[i*M+j] = 1;  
-  }  
- } 
- printf("la");
+  {
+    y[i] = 1.0;
+  } 
 
-  //vector<int> x(N, 1);
+ // Initialize x vector to 1.
+
+  for (int j = 0; j<M; j++)
+  {
+    x[j] = 1; 
+  } 
 
   // Initialize A matrix, you can use a 1D index if you want a flat structure (i.e. a 1D array) e.g. j*M+i is the same than [j][i]
 
- // int A[N][M] = {1};    
+  for (int i = 0 ; i< N ; i++)
+  {
+    for (int j = 0; j<M; j++){
+      A[i*M+j] = 1;  
+    }  
+  }
+   
 
   // Timer products.
   struct timeval begin, end;
@@ -148,28 +149,37 @@ int main( int argc, char* argv[] )
         // Multiply the result of the previous step with the i value of vector y
         // Sum the results of the previous step into a single variable (result)
 
+        
+        double result = 0;
+
         for (int i = 0 ; i < N ; i++){
-          # pragma omp simd parallel for reduction (+:tmp)
+          double tmp1 = 0;
+          double tmp2 = 0;
+
+          # pragma omp parallel for simd reduction (+:tmp1)
           for (int j = 0; j < N ; j++){
-            tmp += A[i*M+j]*x[j];
+            tmp1 += A[i*M+j]*x[j];
           } 
-          # pragma omp simd parallel for reduction (+:result)
-          for (int j = 0; j < N ; j++){
-              result += tmp * y[j]; 
+          # pragma omp parallel for simd reduction (+:tmp2)
+          for (int k = 0; k < N ; k++){
+              tmp2 += tmp1 * y[k]; 
           } 
+          result = tmp2;
         } 
 
     // Output result.
     if ( repeat == ( nrepeat - 1 ) ) {
       printf( "  Computed result for %d x %d is %lf\n", N, M, result );
     }
-
-    //printf("%d %d", N , M);
-    double solution = (double) N * (double) M;
-    //double solution = pow( 2, N) * pow( 2, M);
+    
+    const double solution = (double) N * (double) M;
 
     if ( result != solution ) {
       printf( "  Error: result( %lf ) != solution( %lf )\n", result, solution );
+    }
+
+    if ( result == solution ) {
+      printf( " result( %lf ) = solution( %lf )\n", result, solution );
     }
   }
 
@@ -187,21 +197,17 @@ int main( int argc, char* argv[] )
   // double Gbytes = 1.0e-9 * double( sizeof(double) * ( 2 * M * N + N ) );
   double Gbytes = 1.0e-9 * double( sizeof(double) * ( M + M * N + N ) );
 
+  myfile << ("SIMD ,"+ to_string(N) + " ," + to_string(M) + " ," + to_string(nrepeat) + " ," + to_string(time) + " ," + to_string(Gbytes*1000) + " ," + to_string(Gbytes * nrepeat / time ) + "\n");
+
   // Print results (problem size, time and bandwidth in GB/s).
   printf( "  N( %d ) M( %d ) nrepeat ( %d ) problem( %g MB ) time( %g s ) bandwidth( %g GB/s )\n",
           N, M, nrepeat, Gbytes * 1000, time, Gbytes * nrepeat / time );
 
-  myfile << ("sequential ,"+ to_string(N) + " ," + to_string(M) + " ," + to_string(nrepeat) + " ," + to_string(time) + " ," + to_string(Gbytes*1000) + " ," + to_string(Gbytes * nrepeat / time ) + "\n");
+  std::free(A);
+  std::free(y);
+  std::free(x);
 
-  //std::free(A);
-  //std::free(y);
-  //std::free(x);
-  
   myfile.close();
-
-  delete(x);
-  delete(y);
-  delete(A);
 
   return 0;
 }

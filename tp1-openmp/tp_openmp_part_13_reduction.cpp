@@ -28,86 +28,15 @@ static int nb_core = 1;
 double step;
 string variation = "";
 
-double sumSplitArray(){
-      variation = "reduction";
-    //  double sums[num_steps] = {0};
-      int cores = 8;
-
-        double x, sum = 0.0;
-      for(int j=1;j<=cores;j++){
-        int sectionBegin = num_steps/cores*(j-1) +1;
-        int sectionSize = num_steps/cores;
-        /*
-        # pragma omp parallel for private(x) reduction (+:sum)
-        for (int i=sectionBegin;i<= sectionBegin+sectionSize; i++){
-            x = (i-0.5)*step;
-            sum = sum + 4.0/(1.0+x*x);
-        }*/
-        cout << num_steps/cores*(j-1) << " " << num_steps/8*j << endl;
-
-      }
-      return sum;
-
-
-}
-
-double sumReduction(){
-      variation = "reduce";
+double calculatePi(){
+  variation = "reduction";
       double x, sum = 0.0;
       # pragma omp parallel for private(x) reduction (+:sum)
       for (int i=1;i<= num_steps; i++){
           x = (i-0.5)*step;
           sum = sum + 4.0/(1.0+x*x);
       }
-      return sum;
-}
-
-double sumCritical(){
-  variation = "critical";
-  double x, sum = 0.0;
-  # pragma omp parallel for private(x) shared (sum)
-
-          for (int i=1;i<= num_steps; i++){
-
-                x = (i-0.5)*step;
-            # pragma omp critical
-                sum = sum + 4.0/(1.0+x*x);
-
-
-          }
-
-      return sum;
-}
-
-double sumAtomic(){
-  variation = "atomic";
-      double x, sum = 0.0;
-    #pragma omp parallel for private (x) shared (sum)
-    for (int i=1;i<= num_steps; i++){
-		  x = (i-0.5)*step;
-          # pragma omp atomic
-          sum = sum + 4.0/(1.0+x*x);
-    }
-    return sum;
-
-}
-
-int sumStandard(){
-  variation = "standard";
-      double x, sum = 0.0;
-          for (int i=1;i<= num_steps; i++){
-              x = (i-0.5)*step;
-              sum = sum + 4.0/(1.0+x*x);
-          }
-      return sum;
-}
-
-double calculatePi(){
-  //return step * sumStandard();
-  //return step * sumAtomic();
-  //return step * sumCritical();
-  return step * sumReduction();
-  //return step * sumSplitArray();
+      return step*sum;
 }
 
 int main (int argc, char** argv)
@@ -128,9 +57,7 @@ int main (int argc, char** argv)
             exit( 1 );
         }
       }
-
-      int rounds = 10;
-
+      omp_set_num_threads(nb_core);
 
       step = 1.0/(double) num_steps;
 
@@ -142,8 +69,6 @@ int main (int argc, char** argv)
       std::ofstream myfile;
       myfile.open ("stats_pi.csv",ios_base::app);
 
-
-      for(int i=0;i<rounds;i++){
         gettimeofday( &begin, NULL );
         double pi = calculatePi();
         gettimeofday( &end, NULL );
@@ -156,7 +81,6 @@ int main (int argc, char** argv)
         //writeToCSV(("%i, %lf, %s",i,time, variation));
         myfile << (variation + ", "+ to_string(nb_core) + " ," + to_string(num_steps) + " ," + to_string(time) + "\n");
 
-      }
   myfile.close();
         //printf("\n Average: %lf \n ",totalTime/rounds);
 }
