@@ -197,7 +197,7 @@ int main( int argc, char* argv[] )
   // double Gbytes = 1.0e-9 * double( sizeof(double) * ( 2 * M * N + N ) );
   double Gbytes = 1.0e-9 * double( sizeof(double) * ( M + M * N + N ) );
 
-  myfile << ("SIMD ,"+ to_string(N) + " ," + to_string(M) + " ," + to_string(nrepeat) + " ," + to_string(time) + " ," + to_string(Gbytes*1000) + " ," + to_string(Gbytes * nrepeat / time ) + "\n");
+  myfile << ("SIMD ,"+  + to_string(nb_core) + " ," + to_string(N) + " ," + to_string(M) + " ," + to_string(nrepeat) + " ," + to_string(time) + " ," + to_string(Gbytes*1000) + " ," + to_string(Gbytes * nrepeat / time ) + "\n");
 
   // Print results (problem size, time and bandwidth in GB/s).
   printf( "  N( %d ) M( %d ) nrepeat ( %d ) problem( %g MB ) time( %g s ) bandwidth( %g GB/s )\n",
