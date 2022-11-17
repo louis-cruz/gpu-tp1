@@ -47,9 +47,8 @@ __global__ void deviceCudaThreadSum(float *threadSums, double *step){
         __syncthreads();
 }
 
-double calculatePiReduction(int num_steps, double step){
+double calculatePiReduction(int num_steps, double step, int threads){
 
-  int threads = 256;
   int blocks = num_steps / threads;
 
 	double *dev_step = &step;

@@ -35,7 +35,7 @@ __global__ void deviceSumCuda(float *pi, double *step){
           atomicAdd(pi, blockSum);
 }
 
-double calculatePiAtomic(int num_steps, double step){
+double calculatePiAtomic(int num_steps, double step, int threads){
 
   float *dev_pi, tmpPi = 0;
 	double *dev_step;
@@ -46,7 +46,6 @@ double calculatePiAtomic(int num_steps, double step){
 	cudaMemcpy(dev_pi, &tmpPi, sizeof(float), cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_step, &step, sizeof(double), cudaMemcpyHostToDevice);
 
-  int threads = 256;
   int blocks = num_steps / threads;
 
 	deviceSumCuda<<<blocks, threads>>>(dev_pi, dev_step);
