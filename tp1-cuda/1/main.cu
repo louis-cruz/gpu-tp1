@@ -46,7 +46,7 @@ void evaluate(){
     for(int i = 0; i <= 4;i++){
       for(int j=0;j<=3;j++){
       launch(&calculatePiAtomic, "atomic", num_steps, threads_per_block[i], steps_per_thread[j], rounds);
-      //launch(&calculatePiReduction, "reduction", num_steps, threads_per_block[i], steps_per_thread[j], rounds);
+      launch(&calculatePiReduction, "reduction", num_steps, threads_per_block[i], steps_per_thread[j], rounds);
       }
       }
     }
@@ -54,7 +54,7 @@ void evaluate(){
 
 int main (int argc, char** argv)
 {
-      //evaluate();
+      evaluate();
       //launch(&calculatePiAtomic, "atomic", 100000000, 256, 256, 1);
-      launch(&calculatePiReduction, "reduction", 10000000, 256, 256, 1);
+      //launch(&calculatePiReduction, "reduce", 10000000, 256, 256, 1);
 }
